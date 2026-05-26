@@ -1,0 +1,47 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Build the complete frontend game UI with dark gaming theme: panorama viewer using embedded/static imagery, interactive Leaflet guess map, game HUD (timer, score, round info), result screen with distance visualization, and all game mode selections.",
+  "status": "pending",
+  "steps": [
+    "Create packages/client/src/components/layout/GameLayout.tsx - full-screen dark gaming layout wrapper with gradient backgrounds and subtle animations",
+    "Create packages/client/src/components/game/PanoramaViewer.tsx - panorama/street view component that displays location imagery. Use an iframe embedding Mapillary viewer (free street-level imagery) with the location's Mapillary image key, or a fallback static image. Support camera rotation via mouse drag, zoom via scroll. For Mapillary: embed https://www.mapillary.com/embed?image_key=KEY",
+    "Create packages/client/src/components/game/GuessMap.tsx - Leaflet map component where players place their guess marker. Dark-themed map tiles (CartoDB dark_matter), click to place marker, draggable marker, confirm button. Show the full world map.",
+    "Create packages/client/src/components/game/GameHUD.tsx - heads-up display overlay showing: current round (1/5), timer counting up or down (depending on mode), current total score, game mode badge, mini-map toggle button",
+    "Create packages/client/src/components/game/RoundResult.tsx - result screen after each guess: animated distance line from guess to actual location on map, score animation counting up, distance display, time taken, comparison to average, button to continue",
+    "Create packages/client/src/components/game/GameResults.tsx - final results screen after all rounds: total score with animation, breakdown per round (small map, distance, score), XP earned, achievements unlocked, play again button, share button",
+    "Create packages/client/src/components/game/Timer.tsx - animated timer component with Framer Motion, turns red when time is low in timed modes",
+    "Create packages/client/src/components/game/ScorePopup.tsx - animated score popup that appears when a guess is made, with Framer Motion spring animation",
+    "Create packages/client/src/components/ui/Button.tsx - reusable button component with variants (primary neon green, secondary, danger), hover glow effects, click animations",
+    "Create packages/client/src/components/ui/Card.tsx - glass-morphism card component with subtle border glow",
+    "Create packages/client/src/components/ui/Badge.tsx - badge component for game modes, difficulty levels",
+    "Create packages/client/src/components/ui/ProgressBar.tsx - animated XP/progress bar with gradient fill",
+    "Create packages/client/src/app/page.tsx - home/landing page with: game title with glow effect, mode selection grid (Solo Classic, Infinite, Hardcore, No Move, No Pan, Country Streak), recent games summary, quick stats",
+    "Create packages/client/src/app/game/[mode]/page.tsx - main game page that orchestrates the game flow: fetches locations from API, manages game state, renders PanoramaViewer + GuessMap side by side (or overlay), handles guess submission, shows results between rounds",
+    "Create packages/client/src/app/stats/page.tsx - statistics page showing: games played, average score, best score, country accuracy heatmap placeholder, recent games list",
+    "Create packages/client/src/hooks/useGame.ts - custom hook managing entire game state: current round, locations, guesses, scores, timer, game phase (playing/guessing/result/finished)",
+    "Create packages/client/src/hooks/useTimer.ts - custom hook for timer logic with start/stop/reset, countdown mode for hardcore",
+    "Create packages/client/src/lib/scoring.ts - client-side score calculation preview (mirrors server logic) for immediate feedback",
+    "Create packages/client/src/lib/distance.ts - Haversine formula for distance calculation between two coordinates",
+    "Update packages/client/tailwind.config.ts with custom theme: colors (bg-game-dark: #0a0a0f, bg-game-card: #1a1a2e, accent-primary: #00ff88, accent-secondary: #0088ff, accent-danger: #ff4444), animations (glow, pulse-slow, slide-up, fade-in), glassmorphism utilities",
+    "Create packages/client/src/app/globals.css with dark theme base styles, custom scrollbar, selection colors, Leaflet dark overrides",
+    "Add responsive design: on mobile, panorama takes full screen with map as a slide-up panel; on desktop, side-by-side or overlay layout"
+  ],
+  "acceptance_criteria": [
+    "Home page renders with all 6 game mode options displayed in a grid",
+    "Clicking a game mode navigates to /game/[mode] and starts a game",
+    "PanoramaViewer displays either Mapillary embed or placeholder imagery for each round",
+    "GuessMap renders a dark-themed Leaflet map where clicking places a draggable marker",
+    "Submitting a guess shows the RoundResult with animated distance line and score",
+    "After 5 rounds (in classic mode), GameResults shows the final breakdown",
+    "Timer runs during gameplay and displays elapsed/remaining time",
+    "All UI uses the dark gaming theme with neon accent colors and smooth Framer Motion animations",
+    "The application builds without errors: pnpm run build succeeds"
+  ],
+  "verification": [
+    "cd /projects/sandbox/GeoGuess && pnpm run build",
+    "cd /projects/sandbox/GeoGuess && pnpm run test"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

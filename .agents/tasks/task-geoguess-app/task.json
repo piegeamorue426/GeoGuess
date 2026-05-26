@@ -1,0 +1,7 @@
+{
+  "task_id": "task-geoguess-app",
+  "task_description": "Build a complete full-stack GeoGuessr-like web application called GeoGuess with Next.js frontend, Express backend, SQLite database, dark gaming UI theme, multiple game modes, scoring system, and pre-seeded location database.",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}
