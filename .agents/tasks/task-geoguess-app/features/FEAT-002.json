@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Build the complete frontend game UI with dark gaming theme: panorama viewer using embedded/static imagery, interactive Leaflet guess map, game HUD (timer, score, round info), result screen with distance visualization, and all game mode selections.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Create packages/client/src/components/layout/GameLayout.tsx - full-screen dark gaming layout wrapper with gradient backgrounds and subtle animations",
     "Create packages/client/src/components/game/PanoramaViewer.tsx - panorama/street view component that displays location imagery. Use an iframe embedding Mapillary viewer (free street-level imagery) with the location's Mapillary image key, or a fallback static image. Support camera rotation via mouse drag, zoom via scroll. For Mapillary: embed https://www.mapillary.com/embed?image_key=KEY",

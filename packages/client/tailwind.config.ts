@@ -26,8 +26,10 @@ const config: Config = {
       },
       animation: {
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'pulse-slow': 'pulse 3s ease-in-out infinite',
         'slide-up': 'slide-up 0.3s ease-out',
         'fade-in': 'fade-in 0.5s ease-out',
+        glow: 'glow 2s ease-in-out infinite',
       },
       keyframes: {
         'pulse-glow': {
@@ -41,6 +43,10 @@ const config: Config = {
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        glow: {
+          '0%, 100%': { boxShadow: '0 0 5px rgba(0, 255, 136, 0.2), 0 0 10px rgba(0, 255, 136, 0.1)' },
+          '50%': { boxShadow: '0 0 15px rgba(0, 255, 136, 0.4), 0 0 30px rgba(0, 255, 136, 0.2)' },
         },
       },
     },
