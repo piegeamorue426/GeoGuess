@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Build the complete frontend game UI with dark gaming theme: panorama viewer using embedded/static imagery, interactive Leaflet guess map, game HUD (timer, score, round info), result screen with distance visualization, and all game mode selections.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Create packages/client/src/components/layout/GameLayout.tsx - full-screen dark gaming layout wrapper with gradient backgrounds and subtle animations",
     "Create packages/client/src/components/game/PanoramaViewer.tsx - panorama/street view component that displays location imagery. Use an iframe embedding Mapillary viewer (free street-level imagery) with the location's Mapillary image key, or a fallback static image. Support camera rotation via mouse drag, zoom via scroll. For Mapillary: embed https://www.mapillary.com/embed?image_key=KEY",
@@ -43,5 +43,5 @@
     "cd /projects/sandbox/GeoGuess && pnpm run test"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Build passes successfully. Had to avoid extending ButtonHTMLAttributes on the Button component due to type conflicts between React's onAnimationStart and Framer Motion's motion.button props - used explicit prop interface instead. Leaflet components use next/dynamic with ssr:false pattern (GuessMap->GuessMapInner and ResultMap->ResultMapInner). The shared GameMode type only has classic/timed/streak/challenge, so infinite/nomove/nopan modes map to these. next-env.d.ts is auto-generated and was committed."
 }
