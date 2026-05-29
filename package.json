@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @geoguess/server dev\" \"pnpm --filter @geoguess/client dev\"",
+    "dev": "pnpm --filter @geoguess/shared build && concurrently \"pnpm --filter @geoguess/server dev\" \"pnpm --filter @geoguess/client dev\"",
     "build": "pnpm --filter @geoguess/shared build && pnpm --filter @geoguess/server build && pnpm --filter @geoguess/client build",
     "test": "pnpm --filter @geoguess/server test",
     "seed": "pnpm --filter @geoguess/server seed"
