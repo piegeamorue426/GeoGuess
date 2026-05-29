@@ -1,7 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from './db/database';
+import { seedLocations } from './data/locations';
 import { gameRouter } from './routes/game';
 import { locationsRouter } from './routes/locations';
 import { statsRouter } from './routes/stats';
@@ -19,7 +21,32 @@ app.use(cors({
 app.use(express.json());
 
 // Initialize database
-getDatabase();
+const db = getDatabase();
+
+// Seed locations if the table is empty
+const { count } = db.prepare('SELECT COUNT(*) as count FROM locations').get() as { count: number };
+if (count === 0) {
+  const insert = db.prepare(
+    'INSERT INTO locations (id, lat, lng, country, city, region, difficulty, description, panorama_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const insertMany = db.transaction((locations: typeof seedLocations) => {
+    for (const loc of locations) {
+      insert.run(
+        uuidv4(),
+        loc.lat,
+        loc.lng,
+        loc.country,
+        loc.city,
+        loc.region,
+        loc.difficulty,
+        loc.description,
+        loc.panorama_url
+      );
+    }
+  });
+  insertMany(seedLocations);
+  console.log(`Auto-seeded ${seedLocations.length} locations into the database.`);
+}
 
 // Routes
 app.get('/api/health', (_req, res) => {

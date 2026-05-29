@@ -32,7 +32,10 @@ export function pickRandomLocation(
 
   if (!location) {
     // Fallback: if all locations are excluded, return any random location
-    const fallback = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get() as Location;
+    const fallback = db.prepare('SELECT * FROM locations ORDER BY RANDOM() LIMIT 1').get() as Location | undefined;
+    if (!fallback) {
+      throw new Error('No locations found in database. Please seed the database first.');
+    }
     return fallback;
   }
 
