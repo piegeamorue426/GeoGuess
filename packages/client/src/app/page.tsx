@@ -23,7 +23,7 @@ const gameModes = [
     badgeVariant: 'primary' as const,
   },
   {
-    id: 'classic',
+    id: 'infinite',
     name: 'Infinite',
     description: 'Keep playing until you want to stop. No round limit.',
     icon: Infinity,
@@ -31,7 +31,7 @@ const gameModes = [
     badgeVariant: 'neutral' as const,
   },
   {
-    id: 'timed',
+    id: 'hardcore',
     name: 'Hardcore',
     description: '30 seconds per round. Quick thinking required!',
     icon: Zap,
@@ -39,7 +39,7 @@ const gameModes = [
     badgeVariant: 'danger' as const,
   },
   {
-    id: 'challenge',
+    id: 'no_move',
     name: 'No Move',
     description: 'Cannot move from spawn point. Pure observation skills.',
     icon: Lock,
@@ -47,7 +47,7 @@ const gameModes = [
     badgeVariant: 'warning' as const,
   },
   {
-    id: 'challenge',
+    id: 'no_pan',
     name: 'No Pan',
     description: 'Cannot rotate the camera. Use what you can see.',
     icon: Eye,
@@ -55,7 +55,7 @@ const gameModes = [
     badgeVariant: 'warning' as const,
   },
   {
-    id: 'streak',
+    id: 'country_streak',
     name: 'Country Streak',
     description: 'Guess the country correctly. How long can you streak?',
     icon: Flag,
