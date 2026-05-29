@@ -1,6 +1,5 @@
 import { Score } from '@geoguess/shared';
 
-const MAX_SCORE = 5000;
 const EARTH_RADIUS_KM = 6371;
 
 export function calculateDistance(
@@ -31,26 +30,19 @@ export function calculateScore(
   timeSeconds: number,
   comboCount: number
 ): Score {
-  // Distance penalty: exponential decay based on distance
-  // At 0 km: 0 penalty, at 1000 km: ~3500 penalty, at 5000+ km: ~4900 penalty
-  const distancePenalty = Math.round(
-    MAX_SCORE * (1 - Math.exp(-distanceKm / 1000))
-  );
+  // Base score: linear decay from 5000 at 0km to 0 at 20000km
+  const basePoints = Math.round(5000 * Math.max(0, 1 - distanceKm / 20000));
 
-  const basePoints = MAX_SCORE - distancePenalty;
+  // Time bonus: up to 500 points, loses 5 per second
+  const timeBonus = Math.max(0, Math.round(500 - timeSeconds * 5));
 
-  // Time bonus: up to 500 points for fast guesses (under 10 seconds)
-  let timeBonus = 0;
-  if (timeSeconds < 10) {
-    timeBonus = Math.round(500 * (1 - timeSeconds / 10));
-  } else if (timeSeconds < 30) {
-    timeBonus = Math.round(200 * (1 - (timeSeconds - 10) / 20));
-  }
-
-  // Combo multiplier: 1x base, increases by 0.1 for each consecutive good guess
-  const comboMultiplier = 1 + Math.min(comboCount * 0.1, 0.5);
+  // Combo multiplier: consecutive guesses under 500km add 10% each
+  const comboMultiplier = 1 + comboCount * 0.1;
 
   const total = Math.round((basePoints + timeBonus) * comboMultiplier);
+
+  // distance_penalty is for display purposes
+  const distancePenalty = 5000 - basePoints;
 
   return {
     base_points: basePoints,
@@ -59,4 +51,17 @@ export function calculateScore(
     combo_multiplier: comboMultiplier,
     total: Math.max(0, total),
   };
+}
+
+export function calculateXP(totalGameScore: number): number {
+  return Math.round(totalGameScore / 10);
+}
+
+export function calculateLevel(totalXP: number): number {
+  return Math.floor(totalXP / 1000) + 1;
+}
+
+export function calculateCountryStreakScore(correct: boolean, streak: number): number {
+  if (!correct) return 0;
+  return Math.round(1000 * (1 + streak * 0.1));
 }

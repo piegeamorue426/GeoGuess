@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS rounds (
   round_number INTEGER NOT NULL,
   guess_lat REAL,
   guess_lng REAL,
+  guess_country TEXT,
   distance_km REAL,
   score INTEGER,
   time_seconds INTEGER,

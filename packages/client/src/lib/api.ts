@@ -41,6 +41,17 @@ export async function submitGuess(
   });
 }
 
+export async function submitCountryGuess(
+  gameId: string,
+  country: string,
+  timeSeconds: number
+): Promise<GuessResult> {
+  return fetchApi<GuessResult>(`/games/${gameId}/guess`, {
+    method: 'POST',
+    body: JSON.stringify({ country, timeSeconds }),
+  });
+}
+
 export async function nextRound(gameId: string): Promise<GameState> {
   return fetchApi<GameState>(`/games/${gameId}/next`, {
     method: 'POST',
