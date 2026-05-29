@@ -25,7 +25,9 @@ gameRouter.post('/', validateCreateGame, (req: Request, res: Response) => {
 
     res.status(201).json(state);
   } catch (error) {
-    console.error('Error creating game:', error);
+    const err = error as Error;
+    console.error('Error creating game:', err.message);
+    console.error('Stack trace:', err.stack);
     res.status(500).json({ error: 'Failed to create game' });
   }
 });

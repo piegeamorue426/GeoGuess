@@ -318,6 +318,12 @@ function getLocationsForGame(count: number, mode: GameMode): Location[] {
     usedIds.push(loc.id);
   }
 
+  if (locations.length < count) {
+    throw new Error(
+      `Not enough locations available: found ${locations.length} but need ${count}`
+    );
+  }
+
   return locations;
 }
 
