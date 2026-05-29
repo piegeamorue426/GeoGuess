@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement complete game logic integration, all game modes with their specific rules, scoring system with XP/levels, and backend tests to verify correctness.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Update packages/server/src/services/gameManager.ts to support all 6 game modes with specific rules: Classic (5 rounds, free movement), Infinite (unlimited rounds until quit), Hardcore (30s timer, no move, no zoom), NoMove (no street view navigation), NoPan (fixed camera angle), CountryStreak (only guess country, streak-based scoring)",
     "Update packages/server/src/services/scoring.ts with complete scoring algorithm: base_score = 5000 * (1 - (distance_km / 20000)), time_bonus = max(0, 500 - (seconds * 5)), combo_multiplier = 1 + (consecutive_good_guesses * 0.1), xp_earned = score / 10, level thresholds at 1000 XP per level",
@@ -35,5 +35,5 @@
     "cd /projects/sandbox/GeoGuess && pnpm run test"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "Fixed critical build failures: (1) Missing Score import in gameManager.ts, (2) user creation used userId.slice(0,8) for username/email causing UNIQUE constraint violations across tests - changed to use full userId, (3) GameHUD and game page referenced invalid 'timed' mode instead of 'hardcore', (4) modeLabels only had 4 invalid modes instead of the 6 valid GameMode values. Created CountryGuess.tsx and sounds.ts. All 41 tests pass, build succeeds with zero errors."
 }
