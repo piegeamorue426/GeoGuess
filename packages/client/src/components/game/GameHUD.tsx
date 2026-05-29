@@ -16,9 +16,11 @@ interface GameHUDProps {
 
 const modeLabels: Record<GameMode, string> = {
   classic: 'Classic',
-  timed: 'Hardcore',
-  streak: 'Streak',
-  challenge: 'Challenge',
+  infinite: 'Infinite',
+  hardcore: 'Hardcore',
+  no_move: 'No Move',
+  no_pan: 'No Pan',
+  country_streak: 'Country Streak',
 };
 
 export function GameHUD({
@@ -51,7 +53,7 @@ export function GameHUD({
 
         {/* Right: Score and mode */}
         <div className="flex items-center gap-3 bg-black/60 backdrop-blur-sm rounded-lg px-4 py-2">
-          <Badge variant={mode === 'timed' ? 'danger' : 'primary'}>
+          <Badge variant={mode === 'hardcore' ? 'danger' : 'primary'}>
             {modeLabels[mode]}
           </Badge>
           <div className="text-lg font-bold text-primary">{totalScore.toLocaleString()}</div>

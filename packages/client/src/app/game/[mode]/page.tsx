@@ -17,7 +17,7 @@ import { useTimer } from '@/hooks/useTimer';
 export default function GamePage() {
   const params = useParams();
   const mode = (params.mode as GameMode) || 'classic';
-  const isTimedMode = mode === 'timed';
+  const isTimedMode = mode === 'hardcore';
 
   const {
     gameState,

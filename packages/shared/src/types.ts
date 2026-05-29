@@ -19,9 +19,15 @@ export interface Location {
   panorama_url: string;
 }
 
-export type GameMode = 'classic' | 'timed' | 'streak' | 'challenge';
+export type GameMode = 'classic' | 'infinite' | 'hardcore' | 'no_move' | 'no_pan' | 'country_streak';
 
 export type GameStatus = 'active' | 'completed' | 'abandoned';
+
+export interface ModeRestrictions {
+  noMove: boolean;
+  noPan: boolean;
+  timeLimit: number | null;
+}
 
 export interface Game {
   id: string;
@@ -40,6 +46,7 @@ export interface Round {
   round_number: number;
   guess_lat: number | null;
   guess_lng: number | null;
+  guess_country: string | null;
   distance_km: number | null;
   score: number | null;
   time_seconds: number | null;
@@ -60,6 +67,9 @@ export interface GameState {
   current_round: number;
   current_location: Location | null;
   total_rounds: number;
+  restrictions: ModeRestrictions;
+  streak?: number;
+  xp_earned?: number;
 }
 
 export interface GuessResult {
@@ -67,6 +77,8 @@ export interface GuessResult {
   score: Score;
   actual_location: Location;
   distance_km: number;
+  streak?: number;
+  correct_country?: boolean;
 }
 
 export interface Achievement {

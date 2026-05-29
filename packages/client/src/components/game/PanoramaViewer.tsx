@@ -2,15 +2,19 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Maximize2, Minimize2, Globe } from 'lucide-react';
-import { Location } from '@geoguess/shared';
+import { Maximize2, Minimize2, Globe, Ban, Lock } from 'lucide-react';
+import { Location, ModeRestrictions } from '@geoguess/shared';
 
 interface PanoramaViewerProps {
   location: Location | null;
+  restrictions?: ModeRestrictions;
 }
 
-export function PanoramaViewer({ location }: PanoramaViewerProps) {
+export function PanoramaViewer({ location, restrictions }: PanoramaViewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const noMove = restrictions?.noMove ?? false;
+  const noPan = restrictions?.noPan ?? false;
 
   if (!location) {
     return (
@@ -34,12 +38,20 @@ export function PanoramaViewer({ location }: PanoramaViewerProps) {
       } bg-surface rounded-lg overflow-hidden`}
     >
       {hasPanorama ? (
-        <iframe
-          src={`https://www.mapillary.com/embed?image_key=${location.panorama_url}`}
-          className="w-full h-full border-0"
-          title="Street View"
-          allow="fullscreen"
-        />
+        <div className="relative w-full h-full">
+          <iframe
+            src={`https://www.mapillary.com/embed?image_key=${location.panorama_url}`}
+            className="w-full h-full border-0"
+            title="Street View"
+            allow="fullscreen"
+            style={{
+              pointerEvents: noMove ? 'none' : 'auto',
+            }}
+          />
+          {noMove && (
+            <div className="absolute inset-0 cursor-not-allowed" />
+          )}
+        </div>
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-surface to-surface-light">
           <Globe className="w-24 h-24 text-gray-600 mb-4" />
@@ -47,6 +59,20 @@ export function PanoramaViewer({ location }: PanoramaViewerProps) {
           <p className="text-gray-500 text-sm mt-2">
             Use the map to make your best guess!
           </p>
+        </div>
+      )}
+
+      {/* Mode restriction banners */}
+      {noMove && (
+        <div className="absolute top-3 left-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/90 text-white text-sm font-medium z-10">
+          <Ban size={14} />
+          No Movement Allowed
+        </div>
+      )}
+      {noPan && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/90 text-white text-sm font-medium z-10">
+          <Lock size={14} />
+          No Panning Allowed
         </div>
       )}
 

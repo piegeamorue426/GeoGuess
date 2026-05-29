@@ -2,7 +2,7 @@
   "id": "FEAT-003",
   "type": "feat",
   "description": "Implement complete game logic integration, all game modes with their specific rules, scoring system with XP/levels, and backend tests to verify correctness.",
-  "status": "pending",
+  "status": "in_progress",
   "steps": [
     "Update packages/server/src/services/gameManager.ts to support all 6 game modes with specific rules: Classic (5 rounds, free movement), Infinite (unlimited rounds until quit), Hardcore (30s timer, no move, no zoom), NoMove (no street view navigation), NoPan (fixed camera angle), CountryStreak (only guess country, streak-based scoring)",
     "Update packages/server/src/services/scoring.ts with complete scoring algorithm: base_score = 5000 * (1 - (distance_km / 20000)), time_bonus = max(0, 500 - (seconds * 5)), combo_multiplier = 1 + (consecutive_good_guesses * 0.1), xp_earned = score / 10, level thresholds at 1000 XP per level",

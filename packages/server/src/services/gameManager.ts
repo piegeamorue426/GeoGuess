@@ -1,9 +1,44 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../db/database';
-import { calculateDistance, calculateScore } from './scoring';
-import { Game, GameMode, GameState, GuessResult, Location, Round } from '@geoguess/shared';
+import { calculateDistance, calculateScore, calculateXP, calculateLevel, calculateCountryStreakScore } from './scoring';
+import { pickRandomLocation, getUsedLocationIds } from './locationPicker';
+import { Game, GameMode, GameState, GuessResult, Location, ModeRestrictions, Round, Score } from '@geoguess/shared';
 
-const ROUNDS_PER_GAME = 5;
+interface ModeConfig {
+  maxRounds: number | null;
+  timeLimit: number | null;
+  noMove: boolean;
+  noPan: boolean;
+  comboThreshold: number;
+}
+
+function getModeConfig(mode: GameMode): ModeConfig {
+  switch (mode) {
+    case 'classic':
+      return { maxRounds: 5, timeLimit: null, noMove: false, noPan: false, comboThreshold: 500 };
+    case 'infinite':
+      return { maxRounds: null, timeLimit: null, noMove: false, noPan: false, comboThreshold: 500 };
+    case 'hardcore':
+      return { maxRounds: 5, timeLimit: 30, noMove: true, noPan: true, comboThreshold: 500 };
+    case 'no_move':
+      return { maxRounds: 5, timeLimit: null, noMove: true, noPan: false, comboThreshold: 500 };
+    case 'no_pan':
+      return { maxRounds: 5, timeLimit: null, noMove: false, noPan: true, comboThreshold: 500 };
+    case 'country_streak':
+      return { maxRounds: null, timeLimit: null, noMove: false, noPan: false, comboThreshold: 500 };
+    default:
+      return { maxRounds: 5, timeLimit: null, noMove: false, noPan: false, comboThreshold: 500 };
+  }
+}
+
+function getModeRestrictions(mode: GameMode): ModeRestrictions {
+  const config = getModeConfig(mode);
+  return {
+    noMove: config.noMove,
+    noPan: config.noPan,
+    timeLimit: config.timeLimit,
+  };
+}
 
 export function createGame(userId: string, mode: GameMode): Game {
   const db = getDatabase();
@@ -14,7 +49,7 @@ export function createGame(userId: string, mode: GameMode): Game {
   if (!existingUser) {
     db.prepare(
       'INSERT INTO users (id, username, email) VALUES (?, ?, ?)'
-    ).run(userId, `player_${userId.slice(0, 8)}`, `${userId.slice(0, 8)}@guest.local`);
+    ).run(userId, `player_${userId}`, `${userId}@guest.local`);
 
     db.prepare(
       'INSERT INTO stats (id, user_id) VALUES (?, ?)'
@@ -25,8 +60,13 @@ export function createGame(userId: string, mode: GameMode): Game {
     'INSERT INTO games (id, user_id, mode, status, total_score) VALUES (?, ?, ?, ?, ?)'
   ).run(id, userId, mode, 'active', 0);
 
-  // Pre-select locations for this game
-  const locations = getRandomLocations(ROUNDS_PER_GAME, mode);
+  const config = getModeConfig(mode);
+
+  // For modes with max rounds, pre-select locations
+  // For infinite/country_streak, just pick the first one
+  const roundCount = config.maxRounds || 1;
+  const locations = getLocationsForGame(roundCount, mode);
+
   for (let i = 0; i < locations.length; i++) {
     const roundId = uuidv4();
     db.prepare(
@@ -55,7 +95,9 @@ export function getGameState(gameId: string): GameState | null {
     'SELECT * FROM rounds WHERE game_id = ? ORDER BY round_number'
   ).all(gameId) as Round[];
 
-  // Find current round (first round without a guess)
+  const config = getModeConfig(game.mode);
+
+  // Find current round (first round without a score)
   const currentRoundIndex = rounds.findIndex((r) => r.score === null);
   const currentRound = currentRoundIndex === -1 ? rounds.length : currentRoundIndex + 1;
 
@@ -66,12 +108,29 @@ export function getGameState(gameId: string): GameState | null {
     ).get(rounds[currentRoundIndex].location_id) as Location | undefined || null;
   }
 
+  const totalRounds = config.maxRounds || rounds.length;
+
+  // Calculate streak for country_streak mode
+  let streak = 0;
+  if (game.mode === 'country_streak') {
+    for (let i = rounds.length - 1; i >= 0; i--) {
+      if (rounds[i].score !== null && rounds[i].score! > 0) {
+        streak++;
+      } else if (rounds[i].score !== null) {
+        break;
+      }
+    }
+  }
+
   return {
     game,
     rounds,
     current_round: currentRound,
     current_location: currentLocation,
-    total_rounds: ROUNDS_PER_GAME,
+    total_rounds: totalRounds,
+    restrictions: getModeRestrictions(game.mode),
+    streak: game.mode === 'country_streak' ? streak : undefined,
+    xp_earned: game.status === 'completed' ? calculateXP(game.total_score) : undefined,
   };
 }
 
@@ -79,9 +138,21 @@ export function submitGuess(
   gameId: string,
   guessLat: number,
   guessLng: number,
-  timeSeconds: number
+  timeSeconds: number,
+  guessCountry?: string
 ): GuessResult | null {
   const db = getDatabase();
+
+  const game = db.prepare('SELECT * FROM games WHERE id = ?').get(gameId) as Game | undefined;
+  if (!game || game.status !== 'active') return null;
+
+  const config = getModeConfig(game.mode);
+
+  // Hardcore mode: reject guesses after 30 seconds
+  if (config.timeLimit !== null && timeSeconds > config.timeLimit) {
+    // Auto-penalize: max distance score
+    timeSeconds = config.timeLimit;
+  }
 
   const rounds = db.prepare(
     'SELECT * FROM rounds WHERE game_id = ? ORDER BY round_number'
@@ -95,40 +166,83 @@ export function submitGuess(
   ).get(currentRound.location_id) as Location | undefined;
   if (!location) return null;
 
-  const distance = calculateDistance(guessLat, guessLng, location.lat, location.lng);
+  let scoreTotal: number;
+  let distance: number;
+  let scoreObj: Score;
+  let correctCountry: boolean | undefined;
+  let streak: number | undefined;
 
-  // Calculate combo (consecutive guesses under 1000km)
-  const previousRounds = rounds.filter((r) => r.score !== null && r.round_number < currentRound.round_number);
-  let comboCount = 0;
-  for (let i = previousRounds.length - 1; i >= 0; i--) {
-    if (previousRounds[i].distance_km !== null && previousRounds[i].distance_km! < 1000) {
-      comboCount++;
-    } else {
-      break;
+  if (game.mode === 'country_streak') {
+    // Country streak mode: compare country names
+    const guessedCountry = (guessCountry || '').trim().toLowerCase();
+    const actualCountry = location.country.trim().toLowerCase();
+    correctCountry = guessedCountry === actualCountry;
+
+    // Calculate current streak before this guess
+    let currentStreak = 0;
+    for (let i = rounds.length - 1; i >= 0; i--) {
+      if (rounds[i].score !== null && rounds[i].score! > 0) {
+        currentStreak++;
+      } else if (rounds[i].score !== null) {
+        break;
+      }
     }
+
+    scoreTotal = calculateCountryStreakScore(correctCountry, currentStreak);
+    distance = calculateDistance(guessLat, guessLng, location.lat, location.lng);
+    streak = correctCountry ? currentStreak + 1 : 0;
+
+    scoreObj = {
+      base_points: scoreTotal,
+      distance_penalty: 0,
+      time_bonus: 0,
+      combo_multiplier: 1,
+      total: scoreTotal,
+    };
+
+    // Update round with country guess
+    db.prepare(
+      'UPDATE rounds SET guess_lat = ?, guess_lng = ?, guess_country = ?, distance_km = ?, score = ?, time_seconds = ? WHERE id = ?'
+    ).run(guessLat || 0, guessLng || 0, guessCountry || '', Math.round(distance * 100) / 100, scoreTotal, timeSeconds, currentRound.id);
+  } else {
+    distance = calculateDistance(guessLat, guessLng, location.lat, location.lng);
+
+    // Calculate combo (consecutive guesses under threshold)
+    const previousRounds = rounds.filter((r) => r.score !== null && r.round_number < currentRound.round_number);
+    let comboCount = 0;
+    for (let i = previousRounds.length - 1; i >= 0; i--) {
+      if (previousRounds[i].distance_km !== null && previousRounds[i].distance_km! < config.comboThreshold) {
+        comboCount++;
+      } else {
+        break;
+      }
+    }
+
+    scoreObj = calculateScore(distance, timeSeconds, comboCount);
+    scoreTotal = scoreObj.total;
+
+    db.prepare(
+      'UPDATE rounds SET guess_lat = ?, guess_lng = ?, distance_km = ?, score = ?, time_seconds = ? WHERE id = ?'
+    ).run(guessLat, guessLng, Math.round(distance * 100) / 100, scoreTotal, timeSeconds, currentRound.id);
   }
-
-  const score = calculateScore(distance, timeSeconds, comboCount);
-
-  db.prepare(
-    'UPDATE rounds SET guess_lat = ?, guess_lng = ?, distance_km = ?, score = ?, time_seconds = ? WHERE id = ?'
-  ).run(guessLat, guessLng, Math.round(distance * 100) / 100, score.total, timeSeconds, currentRound.id);
 
   // Update game total score
   db.prepare(
     'UPDATE games SET total_score = total_score + ? WHERE id = ?'
-  ).run(score.total, gameId);
+  ).run(scoreTotal, gameId);
 
   // Check if game is complete
-  const remaining = rounds.filter((r) => r.score === null && r.id !== currentRound.id);
-  if (remaining.length === 0) {
+  const shouldComplete = checkGameCompletion(game, rounds, currentRound, config, correctCountry);
+
+  if (shouldComplete) {
     db.prepare(
       "UPDATE games SET status = 'completed', completed_at = datetime('now') WHERE id = ?"
     ).run(gameId);
 
-    // Update user stats
-    const game = db.prepare('SELECT * FROM games WHERE id = ?').get(gameId) as Game;
-    updateStats(game.user_id);
+    // Update user XP
+    const updatedGame = db.prepare('SELECT * FROM games WHERE id = ?').get(gameId) as Game;
+    updateUserXP(updatedGame.user_id, updatedGame.total_score);
+    updateStats(updatedGame.user_id);
   }
 
   return {
@@ -136,31 +250,88 @@ export function submitGuess(
       ...currentRound,
       guess_lat: guessLat,
       guess_lng: guessLng,
+      guess_country: guessCountry || null,
       distance_km: Math.round(distance * 100) / 100,
-      score: score.total,
+      score: scoreTotal,
       time_seconds: timeSeconds,
     },
-    score,
+    score: scoreObj,
     actual_location: location,
     distance_km: Math.round(distance * 100) / 100,
+    streak,
+    correct_country: correctCountry,
   };
 }
 
-function getRandomLocations(count: number, mode: GameMode): Location[] {
+export function advanceToNextRound(gameId: string): GameState | null {
   const db = getDatabase();
 
-  let query = 'SELECT * FROM locations';
-  const params: number[] = [];
+  const game = db.prepare('SELECT * FROM games WHERE id = ?').get(gameId) as Game | undefined;
+  if (!game || game.status !== 'active') return null;
 
-  if (mode === 'challenge') {
-    query += ' WHERE difficulty >= ?';
-    params.push(4);
+  const config = getModeConfig(game.mode);
+
+  // For infinite/country_streak modes, create a new round dynamically
+  if (config.maxRounds === null) {
+    const usedIds = getUsedLocationIds(gameId);
+    const location = pickRandomLocation(game.mode, undefined, usedIds);
+    const roundNumber = usedIds.length + 1;
+    const roundId = uuidv4();
+    db.prepare(
+      'INSERT INTO rounds (id, game_id, location_id, round_number) VALUES (?, ?, ?, ?)'
+    ).run(roundId, gameId, location.id, roundNumber);
   }
 
-  query += ' ORDER BY RANDOM() LIMIT ?';
-  params.push(count);
+  return getGameState(gameId);
+}
 
-  return db.prepare(query).all(...params) as Location[];
+function checkGameCompletion(
+  game: Game,
+  rounds: Round[],
+  currentRound: Round,
+  config: ModeConfig,
+  correctCountry?: boolean
+): boolean {
+  // Country streak ends when guess is wrong
+  if (game.mode === 'country_streak' && correctCountry === false) {
+    return true;
+  }
+
+  // For modes with max rounds, check if all rounds are done
+  if (config.maxRounds !== null) {
+    const remaining = rounds.filter((r) => r.score === null && r.id !== currentRound.id);
+    if (remaining.length === 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function getLocationsForGame(count: number, mode: GameMode): Location[] {
+  const locations: Location[] = [];
+  const usedIds: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const loc = pickRandomLocation(mode, undefined, usedIds);
+    locations.push(loc);
+    usedIds.push(loc.id);
+  }
+
+  return locations;
+}
+
+function updateUserXP(userId: string, gameScore: number): void {
+  const db = getDatabase();
+  const xpEarned = calculateXP(gameScore);
+
+  const user = db.prepare('SELECT xp FROM users WHERE id = ?').get(userId) as { xp: number } | undefined;
+  if (!user) return;
+
+  const newXP = user.xp + xpEarned;
+  const newLevel = calculateLevel(newXP);
+
+  db.prepare('UPDATE users SET xp = ?, level = ? WHERE id = ?').run(newXP, newLevel, userId);
 }
 
 function updateStats(userId: string): void {
