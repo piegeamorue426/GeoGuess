@@ -1,0 +1,39 @@
+{
+  "id": "FEAT-003",
+  "type": "feat",
+  "description": "Implement complete game logic integration, all game modes with their specific rules, scoring system with XP/levels, and backend tests to verify correctness.",
+  "status": "completed",
+  "steps": [
+    "Update packages/server/src/services/gameManager.ts to support all 6 game modes with specific rules: Classic (5 rounds, free movement), Infinite (unlimited rounds until quit), Hardcore (30s timer, no move, no zoom), NoMove (no street view navigation), NoPan (fixed camera angle), CountryStreak (only guess country, streak-based scoring)",
+    "Update packages/server/src/services/scoring.ts with complete scoring algorithm: base_score = 5000 * (1 - (distance_km / 20000)), time_bonus = max(0, 500 - (seconds * 5)), combo_multiplier = 1 + (consecutive_good_guesses * 0.1), xp_earned = score / 10, level thresholds at 1000 XP per level",
+    "Create packages/server/src/services/locationPicker.ts - intelligent location picker: respects game mode region filters, avoids recently used locations within same game, balances continent distribution, difficulty-aware selection",
+    "Update packages/server/src/routes/game.ts to validate mode-specific rules on each guess (e.g., reject move in NoMove mode is client-side only, but validate time limits server-side for Hardcore), update user XP after game completion",
+    "Create packages/server/src/middleware/validation.ts - request validation middleware for all endpoints (validate lat/lng ranges, game IDs, mode values)",
+    "Create packages/server/src/__tests__/scoring.test.ts - unit tests for scoring: perfect score at 0km, zero score at 20000km, time bonus calculation, combo multiplier",
+    "Create packages/server/src/__tests__/gameManager.test.ts - unit tests for game manager: create game with correct mode settings, round progression, no duplicate locations, game completion",
+    "Create packages/server/src/__tests__/locationPicker.test.ts - unit tests for location picker: returns valid locations, respects difficulty filter, no duplicates within game",
+    "Update packages/client/src/hooks/useGame.ts to enforce mode-specific restrictions on the client: disable panorama navigation in NoMove mode, disable camera rotation in NoPan mode, enforce timer countdown in Hardcore mode, handle CountryStreak mode (show country list instead of map)",
+    "Create packages/client/src/components/game/CountryGuess.tsx - country selection component for Country Streak mode: searchable dropdown of all countries, flag icons, streak counter display",
+    "Update packages/client/src/components/game/PanoramaViewer.tsx to respect mode restrictions: disable mouse interaction in NoMove, disable rotation in NoPan, show mode restriction badge",
+    "Add sound effect triggers (UI click, correct guess ding, wrong guess buzz, level up fanfare) as placeholder audio element references in a packages/client/src/lib/sounds.ts utility - actual audio files can be added later but the hooks and triggers should be in place"
+  ],
+  "acceptance_criteria": [
+    "All 6 game modes create games with correct settings via the API",
+    "Scoring produces 5000 for 0km distance and approaches 0 for 20000km",
+    "Time bonus correctly rewards faster guesses",
+    "XP is calculated and would be persisted after game completion",
+    "Location picker never returns duplicate locations within the same game",
+    "Hardcore mode enforces 30-second time limit",
+    "NoMove mode disables panorama navigation on the client",
+    "NoPan mode disables camera rotation on the client",
+    "Country Streak mode shows country selection UI instead of map",
+    "All backend tests pass: pnpm run test succeeds with no failures",
+    "The full application builds: pnpm run build succeeds"
+  ],
+  "verification": [
+    "cd /projects/sandbox/GeoGuess && pnpm run build",
+    "cd /projects/sandbox/GeoGuess && pnpm run test"
+  ],
+  "blocked_reason": null,
+  "findings": "Fixed critical build failures: (1) Missing Score import in gameManager.ts, (2) user creation used userId.slice(0,8) for username/email causing UNIQUE constraint violations across tests - changed to use full userId, (3) GameHUD and game page referenced invalid 'timed' mode instead of 'hardcore', (4) modeLabels only had 4 invalid modes instead of the 6 valid GameMode values. Created CountryGuess.tsx and sounds.ts. All 41 tests pass, build succeeds with zero errors."
+}

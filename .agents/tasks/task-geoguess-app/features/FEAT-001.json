@@ -1,0 +1,44 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Set up the monorepo structure, install all dependencies, configure TypeScript, TailwindCSS, and create the Express backend with SQLite database schema including pre-seeded locations.",
+  "status": "completed",
+  "steps": [
+    "Create root package.json with pnpm workspaces configuration pointing to packages/*",
+    "Create pnpm-workspace.yaml listing packages/*",
+    "Create packages/shared/package.json and packages/shared/src/types.ts with shared TypeScript interfaces: User, Game, Round, Location, GameMode, Score, GameState, GuessResult",
+    "Create packages/shared/tsconfig.json",
+    "Create packages/server/package.json with dependencies: express, better-sqlite3, cors, uuid, dotenv, and devDependencies: typescript, @types/express, @types/better-sqlite3, @types/cors, @types/uuid, jest, @types/jest, ts-jest, ts-node, nodemon",
+    "Create packages/server/tsconfig.json with strict mode",
+    "Create packages/server/src/db/schema.sql with tables: users (id, username, email, xp, level, created_at), locations (id, lat, lng, country, city, region, difficulty, description, panorama_url), games (id, user_id, mode, status, total_score, created_at, completed_at), rounds (id, game_id, location_id, round_number, guess_lat, guess_lng, distance_km, score, time_seconds, created_at), achievements (id, user_id, type, unlocked_at), stats (id, user_id, games_played, total_score, avg_distance, best_score, country_streaks, updated_at)",
+    "Create packages/server/src/db/database.ts that initializes SQLite database, runs schema, and provides a singleton connection",
+    "Create packages/server/src/data/locations.ts with 100+ pre-seeded real-world locations spread across all continents with lat/lng, country, city/region, difficulty (1-5), and Mapillary image IDs or placeholder panorama URLs",
+    "Create packages/server/src/db/seed.ts that inserts pre-seeded locations into the database",
+    "Create packages/server/src/index.ts as Express entry point with CORS, JSON parsing, and basic health endpoint",
+    "Create packages/server/src/routes/game.ts with endpoints: POST /api/games (create game), GET /api/games/:id (get game state), POST /api/games/:id/guess (submit guess), POST /api/games/:id/next (next round), GET /api/games/:id/results (final results)",
+    "Create packages/server/src/routes/locations.ts with endpoint: GET /api/locations/random (get random location for a round with mode/difficulty filtering)",
+    "Create packages/server/src/routes/stats.ts with endpoints: GET /api/stats/:userId (player stats), GET /api/leaderboard (top scores)",
+    "Create packages/server/src/services/scoring.ts implementing score calculation: base 5000 points minus distance penalty, time bonus, combo multiplier",
+    "Create packages/server/src/services/gameManager.ts implementing game logic: create game, get random locations avoiding duplicates, manage rounds, calculate totals",
+    "Add scripts to packages/server/package.json: dev (nodemon), build (tsc), start (node dist/index.js), test (jest), seed (ts-node src/db/seed.ts)",
+    "Create packages/client using Next.js 14 with App Router: npx create-next-app@14 with TypeScript, TailwindCSS, ESLint, App Router",
+    "Add additional client dependencies: framer-motion, leaflet, react-leaflet, @types/leaflet, lucide-react, clsx, tailwind-merge",
+    "Configure TailwindCSS in packages/client with dark gaming theme: custom colors (dark backgrounds, neon accents), custom fonts, animations",
+    "Create packages/client/src/lib/api.ts with typed API client functions for all backend endpoints",
+    "Create root-level scripts in root package.json: dev (concurrently run client and server), build (build both), test (test server)",
+    "Create .env.example with PORT=3001, DATABASE_PATH=./data/geoguess.db, CLIENT_URL=http://localhost:3000"
+  ],
+  "acceptance_criteria": [
+    "Running pnpm install at root succeeds and installs all workspace packages",
+    "Running pnpm run build compiles both client and server without errors",
+    "The SQLite database is created with correct schema when server starts",
+    "Pre-seeded locations cover at least 100 real-world places across 30+ countries",
+    "All TypeScript compiles without errors in strict mode"
+  ],
+  "verification": [
+    "cd /projects/sandbox/GeoGuess && pnpm install",
+    "cd /projects/sandbox/GeoGuess && pnpm run build"
+  ],
+  "blocked_reason": null,
+  "findings": "Build succeeds for all 3 packages (shared, server, client). Server tsconfig uses declaration:false to avoid pnpm strict symlink TS2742 errors with express types. Seed produces 119 locations across 88 countries. pnpm.onlyBuiltDependencies needed for better-sqlite3 and unrs-resolver native builds. Next.js 14.2.4 builds and generates static pages successfully."
+}

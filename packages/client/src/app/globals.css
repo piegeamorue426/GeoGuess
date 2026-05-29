@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background: #0a0a1a;
+}
+
+@layer base {
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: var(--background);
+  }
+
+  ::selection {
+    background-color: rgba(0, 255, 136, 0.3);
+    color: white;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a4a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a5a;
+}
+
+/* Leaflet container fixes */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  background: #0a0a1a;
+}
+
+/* Dark theme overrides for Leaflet controls */
+.leaflet-control-zoom a {
+  background-color: #1a1a2e !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #2a2a4e !important;
+}
+
+.leaflet-control-attribution {
+  background-color: rgba(10, 10, 26, 0.8) !important;
+  color: #666 !important;
+}
+
+.leaflet-control-attribution a {
+  color: #888 !important;
+}

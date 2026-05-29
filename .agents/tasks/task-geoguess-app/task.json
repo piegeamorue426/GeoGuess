@@ -1,0 +1,14 @@
+{
+  "task_id": "task-geoguess-app",
+  "task_description": "Build a complete full-stack GeoGuessr-like web application called GeoGuess with Next.js frontend, Express backend, SQLite database, dark gaming UI theme, multiple game modes, scoring system, and pre-seeded location database.",
+  "status": "completed",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null,
+  "verification": {
+    "build": "pass",
+    "tests": "pass",
+    "test_quality": "pass",
+    "docker_build": "skipped",
+    "summary": "pnpm run build succeeds (shared, server, client all compile). pnpm run test passes all 42 tests (scoring: 27, gameManager: 15, locationPicker: 5). No Docker available. Review fixes applied: combo multiplier capped at 2.0, auto-submit on hardcore timer expiry, country streak no longer writes fake coordinates."
+  }
+}

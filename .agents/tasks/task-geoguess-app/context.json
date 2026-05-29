@@ -1,0 +1,25 @@
+{
+  "project_type": "Full-stack Next.js + Express web application (GeoGuessr-like game)",
+  "language": "TypeScript",
+  "build_system": "pnpm workspaces with Next.js (frontend) and Express (backend)",
+  "test_framework": "Jest for backend, Next.js built-in for frontend validation",
+  "build_command": "cd /projects/sandbox/GeoGuess && pnpm install && pnpm run build",
+  "test_command": "cd /projects/sandbox/GeoGuess && pnpm run test",
+  "verification_instructions": "1. Run pnpm install at root. 2. Run pnpm run build to verify both frontend and backend compile. 3. Run pnpm run test for backend tests.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "pnpm install at project root sets up all workspaces",
+  "environment_constraints": "No PostgreSQL runtime available - use SQLite via better-sqlite3. No Docker daemon. Full internet access for npm packages. Node.js v22 available. Use free/open-source map solutions only (Leaflet + OpenStreetMap tiles for guess map, embedded panorama images for street view experience).",
+  "contribution_requirements": "Greenfield project - establish conventions: TypeScript strict mode, ESLint, Prettier, modular architecture",
+  "key_patterns": "Monorepo with packages/client (Next.js) and packages/server (Express). Shared types in packages/shared. SQLite for persistence. Pre-seeded location database with curated coordinates. Leaflet for interactive map. Custom panorama viewer using static/embedded imagery or Mapillary integration.",
+  "relevant_files": [
+    "package.json (root workspace config)",
+    "packages/client/ (Next.js frontend)",
+    "packages/server/ (Express backend)",
+    "packages/shared/ (shared types)",
+    "packages/server/src/db/ (SQLite schema and migrations)",
+    "packages/server/src/data/locations.ts (pre-seeded locations)",
+    "packages/client/src/app/ (Next.js app router pages)",
+    "packages/client/src/components/ (React components)"
+  ],
+  "directory_structure": "Monorepo: root package.json with pnpm workspaces. packages/client = Next.js 14 app with TailwindCSS + Framer Motion. packages/server = Express API with SQLite. packages/shared = TypeScript types shared between client and server."
+}
