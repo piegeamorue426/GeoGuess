@@ -36,8 +36,8 @@ export function calculateScore(
   // Time bonus: up to 500 points, loses 5 per second
   const timeBonus = Math.max(0, Math.round(500 - timeSeconds * 5));
 
-  // Combo multiplier: consecutive guesses under 500km add 10% each
-  const comboMultiplier = 1 + comboCount * 0.1;
+  // Combo multiplier: consecutive guesses under 500km add 10% each, capped at 2.0
+  const comboMultiplier = Math.min(2.0, 1 + comboCount * 0.1);
 
   const total = Math.round((basePoints + timeBonus) * comboMultiplier);
 

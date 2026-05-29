@@ -47,10 +47,16 @@ export function useGame(): UseGameReturn {
   const [streak, setStreak] = useState(0);
   const [timerExpired, setTimerExpired] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasSubmittedRef = useRef(false);
 
   const restrictions = gameState?.restrictions || DEFAULT_RESTRICTIONS;
   const isCountryStreak = gameState?.game.mode === 'country_streak';
   const isInfinite = gameState?.game.mode === 'infinite';
+
+  // Reset submission tracking on round change
+  useEffect(() => {
+    hasSubmittedRef.current = false;
+  }, [gameState?.current_round]);
 
   // Handle hardcore timer
   useEffect(() => {
@@ -58,6 +64,30 @@ export function useGame(): UseGameReturn {
       setTimerExpired(false);
       timerRef.current = setTimeout(() => {
         setTimerExpired(true);
+        // Auto-submit a penalty guess (0,0) if not already submitted
+        if (!hasSubmittedRef.current && gameState) {
+          hasSubmittedRef.current = true;
+          api.submitGuess(gameState.game.id, 0, 0, restrictions.timeLimit || 30)
+            .then(result => {
+              setCurrentResult(result);
+              setTotalScore(prev => prev + result.score.total);
+              setRoundHistory(prev => [...prev, {
+                roundNumber: gameState.current_round,
+                guessResult: result,
+                timeSeconds: restrictions.timeLimit || 30,
+              }]);
+              return api.getGameState(gameState.game.id);
+            })
+            .then(updatedState => {
+              setGameState(updatedState);
+              if (updatedState.game.status === 'completed') {
+                setPhase('finished');
+              } else {
+                setPhase('result');
+              }
+            })
+            .catch(() => {});
+        }
       }, restrictions.timeLimit * 1000);
     }
     return () => {
@@ -94,6 +124,7 @@ export function useGame(): UseGameReturn {
 
       try {
         setError(null);
+        hasSubmittedRef.current = true;
         const result = await api.submitGuess(gameState.game.id, lat, lng, timeSeconds);
         setCurrentResult(result);
         setTotalScore((prev) => prev + result.score.total);
@@ -134,6 +165,7 @@ export function useGame(): UseGameReturn {
 
       try {
         setError(null);
+        hasSubmittedRef.current = true;
         const result = await api.submitCountryGuess(gameState.game.id, country, timeSeconds);
         setCurrentResult(result);
         setTotalScore((prev) => prev + result.score.total);

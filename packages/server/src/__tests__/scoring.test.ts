@@ -48,6 +48,11 @@ describe('calculateScore', () => {
     expect(combo2.combo_multiplier).toBe(1.2);
   });
 
+  it('caps combo multiplier at 2.0', () => {
+    const result = calculateScore(0, 50, 15); // 15 combo would be 2.5 without cap
+    expect(result.combo_multiplier).toBe(2.0);
+  });
+
   it('returns half score at 10000km', () => {
     const result = calculateScore(10000, 100, 0);
     // base = 5000 * (1 - 10000/20000) = 5000 * 0.5 = 2500

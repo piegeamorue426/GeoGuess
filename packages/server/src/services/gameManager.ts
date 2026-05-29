@@ -189,7 +189,7 @@ export function submitGuess(
     }
 
     scoreTotal = calculateCountryStreakScore(correctCountry, currentStreak);
-    distance = calculateDistance(guessLat, guessLng, location.lat, location.lng);
+    distance = 0;
     streak = correctCountry ? currentStreak + 1 : 0;
 
     scoreObj = {
@@ -200,10 +200,10 @@ export function submitGuess(
       total: scoreTotal,
     };
 
-    // Update round with country guess
+    // Update round with country guess (no coordinates for country streak)
     db.prepare(
       'UPDATE rounds SET guess_lat = ?, guess_lng = ?, guess_country = ?, distance_km = ?, score = ?, time_seconds = ? WHERE id = ?'
-    ).run(guessLat || 0, guessLng || 0, guessCountry || '', Math.round(distance * 100) / 100, scoreTotal, timeSeconds, currentRound.id);
+    ).run(null, null, guessCountry || '', null, scoreTotal, timeSeconds, currentRound.id);
   } else {
     distance = calculateDistance(guessLat, guessLng, location.lat, location.lng);
 
